@@ -25,6 +25,7 @@ h1{font-family:'Orbitron',sans-serif;font-size:24px;font-weight:900;letter-spaci
 .mag-btn:hover{color:#fff;border-color:#555}
 
 /* Fixed Upload Style */
+.upload-container{position:relative;width:100%}
 .upload-area{width:100%;height:100px;background:#1a1a1a;border:2px dashed #2a2a2a;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:border-color 0.2s;position:relative;overflow:hidden}
 .upload-area:hover{border-color:#d4a017}
 .upload-area input{position:absolute;inset:0;opacity:0;cursor:pointer}
@@ -32,9 +33,12 @@ h1{font-family:'Orbitron',sans-serif;font-size:24px;font-weight:900;letter-spaci
 .upl-txt{font-size:10px;letter-spacing:1px;color:#444}
 .photo-prev{width:100%;height:140px;object-fit:cover;border-radius:8px;display:none;border:1px solid #2a2a2a;margin-top:5px}
 
-.btn-gen{width:100%;padding:12px;margin-top:14px;background:#d4a017;border:none;border-radius:8px;color:#000;font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;cursor:pointer;transition:all 0.2s}
-.btn-gen:hover{background:#e8b520; transform: translateY(-2px);}
-.btn-gen:active{transform: translateY(0);}
+/* New Share to X Button */
+.btn-share-x{width:100%;padding:12px;margin-top:14px;background:#0f1419;border:1px solid #333;border-radius:8px;color:#fff;font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all 0.2s;display:flex;justify-content:center;align-items:center;gap:8px;}
+.btn-share-x:hover{background:#1a2026; border-color:#555; transform: translateY(-2px);}
+.btn-share-x:active{transform: translateY(0);}
+.btn-share-x svg{width:14px;height:14px;fill:#fff;}
+
 .btn-dl{width:100%;padding:10px;margin-top:8px;background:transparent;border:1px solid #2a2a2a;border-radius:8px;color:#555;font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all 0.2s}
 .btn-dl:hover{border-color:#d4a017;color:#d4a017}
 
@@ -53,7 +57,9 @@ h1{font-family:'Orbitron',sans-serif;font-size:24px;font-weight:900;letter-spaci
 
 .profile-wrap{position:absolute;top:112px;left:50%;transform:translateX(-50%);z-index:20;width:148px;height:148px;border-radius:50%;background:#fff;box-shadow:0 3px 20px rgba(0,0,0,0.12);overflow:hidden;display:flex;align-items:center;justify-content:center}
 #profile-ph{width:100%;height:100%;background:#e0d8ea;display:flex;align-items:center;justify-content:center;font-size:42px;color:#9a8aa2}
-#card-photo{display:none;width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+
+#card-photo{display:none;width:100%;height:100%;background-size:cover;background-position:center;background-repeat:no-repeat;position:absolute;inset:0}
+
 .gmic{position:absolute;font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:2px;z-index:5;transition:color 0.25s}
 .gmic.g1{top:222px;left:10px;transform:rotate(-15deg)}
 .gmic.g2{top:220px;right:10px;transform:rotate(10deg)}
@@ -100,14 +106,21 @@ h1{font-family:'Orbitron',sans-serif;font-size:24px;font-weight:900;letter-spaci
     </div>
     <div class="field">
       <label>Profile Photo</label>
-      <div class="upload-area">
-        <div class="upl-icon">⬆</div>
-        <span class="upl-txt">Click to upload photo</span>
-        <input type="file" id="inp-photo" accept="image/*">
+      <div class="upload-container">
+        <div class="upload-area" id="upl-area">
+          <div class="upl-icon">⬆</div>
+          <span class="upl-txt">Click to upload photo</span>
+          <input type="file" id="inp-photo" accept="image/*">
+        </div>
+        <img id="photo-prev" class="photo-prev" alt="Preview">
       </div>
-      <img id="photo-prev" class="photo-prev" alt="Preview">
     </div>
-    <button class="btn-gen" id="btn-generate">Generate Card</button>
+    
+    <button class="btn-share-x" id="btn-share-x">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg>
+      Share to X
+    </button>
+    
     <button class="btn-dl" id="btn-download">Download PNG</button>
   </div>
 
@@ -131,7 +144,7 @@ h1{font-family:'Orbitron',sans-serif;font-size:24px;font-weight:900;letter-spaci
 
       <div class="profile-wrap">
         <div id="profile-ph">👤</div>
-        <img id="card-photo" src="" alt="">
+        <div id="card-photo"></div>
       </div>
 
       <div class="card-info">
@@ -193,66 +206,93 @@ function updateCard() {
   document.getElementById('card-x').textContent = xInput || '@username';
 }
 
-// Input listeners
 document.getElementById('inp-name').addEventListener('input', updateCard);
 document.getElementById('inp-x').addEventListener('input', updateCard);
 
-// Magnitude selection listeners
 document.querySelectorAll('.mag-btn').forEach(btn => {
   btn.addEventListener('click', () => applyLevel(parseInt(btn.dataset.lv)));
 });
 
-// Photo upload logic
 document.getElementById('inp-photo').addEventListener('change', function(e) {
   const file = e.target.files[0];
   if (!file) return;
   const reader = new FileReader();
   reader.onload = ev => {
     const src = ev.target.result;
-    document.querySelector('.upload-area').style.display = 'none';
+    document.getElementById('upl-area').style.display = 'none';
     const prev = document.getElementById('photo-prev');
     prev.src = src;
     prev.style.display = 'block';
-    document.getElementById('card-photo').src = src;
-    document.getElementById('card-photo').style.display = 'block';
+    const cardPhoto = document.getElementById('card-photo');
+    cardPhoto.style.backgroundImage = `url(${src})`;
+    cardPhoto.style.display = 'block';
     document.getElementById('profile-ph').style.display = 'none';
   };
   reader.readAsDataURL(file);
 });
 
-// Generate button effect
-document.getElementById('btn-generate').addEventListener('click', function() {
-  updateCard();
-  const c = LEVELS[curLv - 1];
-  const card = document.getElementById('card');
-  // Visual feedback when generated
-  card.style.boxShadow = `0 0 30px ${c.main}aa`;
-  setTimeout(() => { card.style.boxShadow = ''; }, 800);
-});
-
-// Download PNG logic
-document.getElementById('btn-download').addEventListener('click', function() {
+// SHARE TO X LOGIC
+document.getElementById('btn-share-x').addEventListener('click', function() {
   updateCard();
   const cardElement = document.getElementById('card');
+  const c = LEVELS[curLv - 1];
   
+  // Visual feedback
+  cardElement.style.boxShadow = `0 0 30px ${c.main}aa`;
+  setTimeout(() => { cardElement.style.boxShadow = ''; }, 800);
+  
+  // 1. Download image first
   html2canvas(cardElement, {
     scale: 3, 
     useCORS: true, 
     backgroundColor: null, 
     logging: false
   }).then(canvas => {
-    const name = document.getElementById('inp-name').value.trim().toLowerCase() || 'seismic-card';
+    const name = document.getElementById('inp-name').value.trim().toLowerCase() || 'seismic';
     const link = document.createElement('a');
     link.download = `seismic-mag${curLv}-${name}.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
+    
+    // 2. Open X Intent with user's specific template
+    const textTemplate = `born in seismic
+as a seismic community
+become a seismic user
+
+Just generated my Magnitude ${curLv} card for @Seismicsys!
+Generate your card https://seismic-card-six.vercel.app/`;
+    
+    const encodedText = encodeURIComponent(textTemplate);
+    const xUrl = `https://twitter.com/intent/tweet?text=${encodedText}`;
+    
+    setTimeout(() => {
+      window.open(xUrl, '_blank');
+    }, 600);
+    
   }).catch(err => {
-    console.error("Download failed:", err);
-    alert("Sorry, could not generate the image. Please check your internet connection.");
+    console.error("Failed:", err);
+    alert("Sorry, could not process. Please check your internet connection.");
   });
 });
 
-// Init
+// Download PNG logic
+document.getElementById('btn-download').addEventListener('click', function() {
+  updateCard();
+  const cardElement = document.getElementById('card');
+  html2canvas(cardElement, {
+    scale: 3, 
+    useCORS: true, 
+    backgroundColor: null, 
+    logging: false
+  }).then(canvas => {
+    const name = document.getElementById('inp-name').value.trim().toLowerCase() || 'card';
+    const link = document.createElement('a');
+    link.download = `seismic-mag${curLv}-${name}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  });
+});
+
 applyLevel(6);
 </script>
 </body>
