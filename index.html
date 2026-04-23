@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seismic Community Card Generator</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@500;600;700&family=Orbitron:wght@700;900&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{min-height:100vh;background:#0d0d0d;font-family:'Rajdhani',sans-serif;color:#fff;display:flex;flex-direction:column;align-items:center;padding:40px 20px 60px}
+h1{font-family:'Orbitron',sans-serif;font-size:24px;font-weight:900;letter-spacing:4px;text-transform:uppercase;margin-bottom:6px;text-align:center}
+.subtitle{font-size:12px;letter-spacing:3px;color:#666;text-transform:uppercase;margin-bottom:36px}
+.workspace{display:flex;gap:36px;align-items:flex-start;flex-wrap:wrap;justify-content:center;width:100%;max-width:980px}
+
+/* FORM PANEL */
+.form-panel{background:#141414;border:1px solid #2a2a2a;border-radius:16px;padding:26px;width:290px;flex-shrink:0}
+.form-panel h2{font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;color:#444;text-transform:uppercase;margin-bottom:22px}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#555;margin-bottom:6px}
+.field input[type="text"]{width:100%;background:#1e1e1e;border:1px solid #2a2a2a;border-radius:8px;padding:10px 12px;color:#fff;font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:600;outline:none;transition:border-color 0.2s}
+.field input[type="text"]:focus{border-color:#d4a017}
+.mag-selector{display:grid;grid-template-columns:repeat(9,1fr);gap:3px;margin-top:4px}
+.mag-btn{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:5px;color:#555;font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;padding:7px 0;cursor:pointer;transition:all 0.15s;text-align:center}
+.mag-btn:hover{color:#fff;border-color:#555}
+
+/* Fixed Upload Style */
+.upload-area{width:100%;height:100px;background:#1a1a1a;border:2px dashed #2a2a2a;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:border-color 0.2s;position:relative;overflow:hidden}
+.upload-area:hover{border-color:#d4a017}
+.upload-area input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.upl-icon{font-size:20px;color:#333;margin-bottom:4px}
+.upl-txt{font-size:10px;letter-spacing:1px;color:#444}
+.photo-prev{width:100%;height:140px;object-fit:cover;border-radius:8px;display:none;border:1px solid #2a2a2a;margin-top:5px}
+
+.btn-gen{width:100%;padding:12px;margin-top:14px;background:#d4a017;border:none;border-radius:8px;color:#000;font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;cursor:pointer;transition:all 0.2s}
+.btn-gen:hover{background:#e8b520; transform: translateY(-2px);}
+.btn-gen:active{transform: translateY(0);}
+.btn-dl{width:100%;padding:10px;margin-top:8px;background:transparent;border:1px solid #2a2a2a;border-radius:8px;color:#555;font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all 0.2s}
+.btn-dl:hover{border-color:#d4a017;color:#d4a017}
+
+/* CARD UI */
+#card{width:370px;height:530px;background:#e8e5e0;border-radius:20px;position:relative;overflow:hidden;flex-shrink:0;transition: box-shadow 0.4s ease;}
+.chev{position:absolute;left:50%;transform:translateX(-50%);clip-path:polygon(50% 100%,0% 0%,100% 0%);transition:background 0.25s}
+#chev1{top:52px;width:490px;height:245px}
+#chev2{top:90px;width:375px;height:185px}
+#chev3{top:118px;width:278px;height:135px}
+.card-white{position:absolute;bottom:0;left:0;right:0;height:318px;background:#fff;border-radius:0 0 20px 20px}
+
+/* Fixed Logo Header */
+.card-header{position:absolute;top:0;left:0;right:0;display:flex;flex-direction:column;align-items:center;padding-top:15px;z-index:10}
+.header-logo-img{height:50px;width:auto;max-width:120px;object-fit:contain;margin-bottom:2px}
+.card-title-txt{font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:5px;color:#3a2a4a}
+
+.profile-wrap{position:absolute;top:112px;left:50%;transform:translateX(-50%);z-index:20;width:148px;height:148px;border-radius:50%;background:#fff;box-shadow:0 3px 20px rgba(0,0,0,0.12);overflow:hidden;display:flex;align-items:center;justify-content:center}
+#profile-ph{width:100%;height:100%;background:#e0d8ea;display:flex;align-items:center;justify-content:center;font-size:42px;color:#9a8aa2}
+#card-photo{display:none;width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+.gmic{position:absolute;font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:2px;z-index:5;transition:color 0.25s}
+.gmic.g1{top:222px;left:10px;transform:rotate(-15deg)}
+.gmic.g2{top:220px;right:10px;transform:rotate(10deg)}
+.gmic.g3{top:278px;right:18px;transform:rotate(12deg)}
+.gmic.g4{top:318px;left:6px;transform:rotate(-12deg)}
+.card-info{position:absolute;bottom:0;left:0;right:0;height:318px;display:flex;flex-direction:column;align-items:center;padding-top:85px;z-index:15}
+.card-name{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:4px;color:#1a1a1a;margin-bottom:1px}
+.card-mag{font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;letter-spacing:4px;color:#7a6a90;text-transform:uppercase;margin-bottom:12px}
+.card-badge-txt{border-radius:26px;padding:6px 20px;font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;margin-bottom:8px;transition:background 0.25s,color 0.25s}
+.card-x{font-family:'Rajdhani',sans-serif;font-size:10px;letter-spacing:2px;color:#888;text-transform:uppercase;margin-bottom:4px}
+.badge-wrap{position:relative;width:90px;height:90px;margin-top:2px;display:flex;justify-content:center;align-items:center}
+#badge-img{width:100%;height:100%;object-fit:contain}
+</style>
+</head>
+<body>
+
+<h1>Card Generator</h1>
+<p class="subtitle">Seismic Community</p>
+
+<div class="workspace">
+  <div class="form-panel">
+    <h2>Input Data</h2>
+    <div class="field">
+      <label>Name / Username</label>
+      <input type="text" id="inp-name" value="" placeholder="TYPE YOUR NAME">
+    </div>
+    <div class="field">
+      <label>Magnitude Level</label>
+      <div class="mag-selector" id="mag-sel">
+        <button class="mag-btn" data-lv="1">1</button>
+        <button class="mag-btn" data-lv="2">2</button>
+        <button class="mag-btn" data-lv="3">3</button>
+        <button class="mag-btn" data-lv="4">4</button>
+        <button class="mag-btn" data-lv="5">5</button>
+        <button class="mag-btn" data-lv="6">6</button>
+        <button class="mag-btn" data-lv="7">7</button>
+        <button class="mag-btn" data-lv="8">8</button>
+        <button class="mag-btn" data-lv="9">9</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>X Account</label>
+      <input type="text" id="inp-x" value="" placeholder="@USERNAME">
+    </div>
+    <div class="field">
+      <label>Profile Photo</label>
+      <div class="upload-area">
+        <div class="upl-icon">⬆</div>
+        <span class="upl-txt">Click to upload photo</span>
+        <input type="file" id="inp-photo" accept="image/*">
+      </div>
+      <img id="photo-prev" class="photo-prev" alt="Preview">
+    </div>
+    <button class="btn-gen" id="btn-generate">Generate Card</button>
+    <button class="btn-dl" id="btn-download">Download PNG</button>
+  </div>
+
+  <div class="card-wrap">
+    <span>Card Preview</span>
+    <div id="card">
+      <div class="chev" id="chev1"></div>
+      <div class="chev" id="chev2"></div>
+      <div class="chev" id="chev3"></div>
+      <div class="card-white"></div>
+
+      <div class="card-header">
+        <img src="logo.png" class="header-logo-img" alt="Logo">
+        <div class="card-title-txt">Seismic Community</div>
+      </div>
+
+      <div class="gmic g1" id="g1">gmic</div>
+      <div class="gmic g2" id="g2">gmic</div>
+      <div class="gmic g3" id="g3">gmic</div>
+      <div class="gmic g4" id="g4">gmic</div>
+
+      <div class="profile-wrap">
+        <div id="profile-ph">👤</div>
+        <img id="card-photo" src="" alt="">
+      </div>
+
+      <div class="card-info">
+        <div class="card-name" id="card-name">NAME</div>
+        <div class="card-mag" id="card-mag">MAGNITUDE 6.0</div>
+        <div class="card-badge-txt" id="card-badge">MAGNITUDE IS KEY</div>
+        <div class="card-x" id="card-x">@username</div>
+        
+        <div class="badge-wrap">
+          <img id="badge-img" src="badge6.png" alt="Badge">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const LEVELS = [
+  {main:'#e8e490',gmic:'#a8a020',badge:'#c8b840',btext:'#3a3000'},
+  {main:'#5adcb8',gmic:'#2a9878',badge:'#3ac8a8',btext:'#003828'},
+  {main:'#18e018',gmic:'#0aa00a',badge:'#18cc18',btext:'#003300'},
+  {main:'#30f030',gmic:'#10bb10',badge:'#22dd22',btext:'#003300'},
+  {main:'#c0e000',gmic:'#88a000',badge:'#aacc00',btext:'#222200'},
+  {main:'#d4a017',gmic:'#a07010',badge:'#d4a017',btext:'#2a1a00'},
+  {main:'#ee8800',gmic:'#bb5500',badge:'#dd7700',btext:'#2a1000'},
+  {main:'#ee3300',gmic:'#bb2200',badge:'#dd3300',btext:'#2a0000'},
+  {main:'#00aaee',gmic:'#0077aa',badge:'#009acc',btext:'#001a2a'},
+];
+
+let curLv = 6;
+
+function applyLevel(lv) {
+  curLv = lv;
+  const c = LEVELS[lv - 1];
+  document.getElementById('chev1').style.background = c.main + 'bb';
+  document.getElementById('chev2').style.background = c.main + '99';
+  document.getElementById('chev3').style.background = c.main + '77';
+  ['g1','g2','g3','g4'].forEach(id => document.getElementById(id).style.color = c.gmic);
+  const bpill = document.getElementById('card-badge');
+  bpill.style.background = c.badge;
+  bpill.style.color = c.btext;
+  document.getElementById('badge-img').src = `badge${lv}.png`;
+  
+  document.querySelectorAll('.mag-btn').forEach(btn => {
+    const active = parseInt(btn.dataset.lv) === lv;
+    btn.style.borderColor = active ? c.badge : '';
+    btn.style.color = active ? '#fff' : '';
+    btn.style.background = active ? c.main + '33' : '';
+  });
+  updateCard();
+}
+
+function updateCard() {
+  const nameInput = document.getElementById('inp-name').value.trim().toUpperCase();
+  const xInput = document.getElementById('inp-x').value.trim();
+  
+  document.getElementById('card-name').textContent = nameInput || 'NAME';
+  document.getElementById('card-mag').textContent = 'MAGNITUDE ' + curLv + '.0';
+  document.getElementById('card-x').textContent = xInput || '@username';
+}
+
+// Input listeners
+document.getElementById('inp-name').addEventListener('input', updateCard);
+document.getElementById('inp-x').addEventListener('input', updateCard);
+
+// Magnitude selection listeners
+document.querySelectorAll('.mag-btn').forEach(btn => {
+  btn.addEventListener('click', () => applyLevel(parseInt(btn.dataset.lv)));
+});
+
+// Photo upload logic
+document.getElementById('inp-photo').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const src = ev.target.result;
+    document.querySelector('.upload-area').style.display = 'none';
+    const prev = document.getElementById('photo-prev');
+    prev.src = src;
+    prev.style.display = 'block';
+    document.getElementById('card-photo').src = src;
+    document.getElementById('card-photo').style.display = 'block';
+    document.getElementById('profile-ph').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+});
+
+// Generate button effect
+document.getElementById('btn-generate').addEventListener('click', function() {
+  updateCard();
+  const c = LEVELS[curLv - 1];
+  const card = document.getElementById('card');
+  // Visual feedback when generated
+  card.style.boxShadow = `0 0 30px ${c.main}aa`;
+  setTimeout(() => { card.style.boxShadow = ''; }, 800);
+});
+
+// Download PNG logic
+document.getElementById('btn-download').addEventListener('click', function() {
+  updateCard();
+  const cardElement = document.getElementById('card');
+  
+  html2canvas(cardElement, {
+    scale: 3, 
+    useCORS: true, 
+    backgroundColor: null, 
+    logging: false
+  }).then(canvas => {
+    const name = document.getElementById('inp-name').value.trim().toLowerCase() || 'seismic-card';
+    const link = document.createElement('a');
+    link.download = `seismic-mag${curLv}-${name}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  }).catch(err => {
+    console.error("Download failed:", err);
+    alert("Sorry, could not generate the image. Please check your internet connection.");
+  });
+});
+
+// Init
+applyLevel(6);
+</script>
+</body>
+</html>
